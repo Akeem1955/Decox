@@ -24,12 +24,6 @@ class Settings:
     # AI Models
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
-
-    # Google SynthID & AI Content Detection
-    SYNTHID_DETECTION_ENDPOINT: str = os.getenv("SYNTHID_DETECTION_ENDPOINT", "")
-    SYNTHID_API_KEY: str = os.getenv("SYNTHID_API_KEY", "")
-    AI_VERIFICATION_THRESHOLD: float = float(os.getenv("AI_VERIFICATION_THRESHOLD", "0.49"))
-    
     # External APIs
     PARALLEL_API_KEY: str = os.getenv("PARALLEL_API_KEY", "")
     DATABASE_URL: str = os.getenv("DATABASE_URL", "")

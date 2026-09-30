@@ -191,13 +191,6 @@ export function getArtisanProfile(artisanId: string) {
   return request(`/api/artisan/${artisanId}`);
 }
 
-export function verifyArtisanImage(data: { image: string }) {
-  return request('/api/artisan/verify-image', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
 export function submitArtisanWork(data: {
   imageUrl: string;
   title: string;

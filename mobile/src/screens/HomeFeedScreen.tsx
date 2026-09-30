@@ -297,7 +297,7 @@ export function HomeFeedScreen() {
         />
       )}
 
-      {/* Add Artisan Portfolio Modal with Anti-AI Pre-Verification */}
+      {/* Add Artisan Portfolio Modal */}
       <AddPortfolioModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}

@@ -164,9 +164,6 @@ class ArtisanSubmitRequest(BaseModel):
     category: str
     estimatedCostNaira: Optional[int] = None
 
-class VerifyImageRequest(BaseModel):
-    image: str = Field(description="Base64 dataUrl or image URL of artisan craft to verify")
-
 
 # ============================================================================
 # HEALTH (no auth)
@@ -362,25 +359,8 @@ async def my_designs(user: dict = Depends(get_current_user)):
 
 
 # ============================================================================
-# ARTISAN UPLOADS & PRE-VERIFICATION
+# ARTISAN UPLOADS
 # ============================================================================
-
-@app.post("/api/artisan/verify-image")
-async def verify_artisan_image(
-    request: VerifyImageRequest,
-    user: dict = Depends(get_current_user),
-):
-    """
-    Image verification endpoint (AI gatekeeping bypassed).
-    """
-    return {
-        "success": True,
-        "verification": {
-            "is_authentic": True,
-            "bypassed": True,
-            "reason": "Direct submission enabled."
-        }
-    }
 
 
 @app.post("/api/artisan/submit")
