@@ -1,0 +1,24 @@
+{
+  "name": "decox",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Decox: Mobile Spatial Redesign Engine & Artisan Craft Network",
+  "scripts": {
+    "dev:mobile": "cd mobile && npx expo start",
+    "dev:mobile:web": "cd mobile && npx expo start --web",
+    "dev:python": "cd python && .venv/Scripts/python -m uvicorn app.main:app --port 8000 --reload"
+  },
+  "keywords": [
+    "decox",
+    "ionic",
+    "capacitor",
+    "revenuecat",
+    "gemini",
+    "langgraph",
+    "langchain",
+    "fastapi",
+    "spatial-redesign"
+  ],
+  "author": "Decox Team",
+  "license": "MIT"
+}

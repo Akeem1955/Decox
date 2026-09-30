@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  PUBLIC_USER
+  TENANT
+  ESTATE_ADMIN
+}
+
+enum SpaceType {
+  HOME_ROOM
+  COMPOUND_OUTDOOR
+  OFFICE_WORKSPACE
+  RECREATIONAL_CENTER
+  RETAIL_SHOP
+  PUBLIC_PARK
+}
+
+enum WorkerCategory {
+  FURNITURE_CARPENTRY
+  PAINTING_FINISHING
+  PLUMBING
+  ELECTRICAL
+  LANDSCAPING_OUTDOOR
+  GENERAL_MASONRY
+}
+
+enum WorkflowBranch {
+  COMMERCE_DIY
+  PHYSICAL_LABOR
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+// -------------------------------------------------------------
+// USER & ESTATE HIERARCHY
+// -------------------------------------------------------------
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  phone        String?
+  bio          String?
+  isArtisan    Boolean  @default(false)
+  passwordHash String?
+  role         UserRole @default(PUBLIC_USER)
+  createdAt    DateTime @default(now())
+
+  portfolios        PortfolioItem[]
+  tenantProfiles    Tenant[]
+  adminProfiles     Admin[]
+  designs           SpatialDesign[]
+  tickets           Ticket[]
+  conciergeMessages ConciergeMessage[]
+}
+
+model Estate {
+  id        String   @id @default(uuid())
+  name      String
+  code      String   @unique
+  slug      String   @unique
+  logoUrl   String?
+  createdAt DateTime @default(now())
+
+  admins        Admin[]
+  tenants       Tenant[]
+  vettedVendors EstateVendor[]
+  contractors   Contractor[]
+  tickets       Ticket[]
+  invitations   Invitation[]
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  userId       String?
+  estateId     String
+  email        String?  @unique
+  passwordHash String?
+  createdAt    DateTime @default(now())
+
+  user   User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  estate Estate @relation(fields: [estateId], references: [id], onDelete: Cascade)
+}
+
+model Tenant {
+  id              String   @id @default(uuid())
+  userId          String?
+  estateId        String
+  houseIdentifier String?
+  houseId         String?
+  name            String?
+  phone           String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  user   User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  estate Estate @relation(fields: [estateId], references: [id], onDelete: Cascade)
+}
+
+model Invitation {
+  id         String           @id @default(uuid())
+  estateId   String
+  email      String
+  targetRole UserRole
+  token      String           @unique @default(cuid())
+  status     InvitationStatus @default(PENDING)
+  expiresAt  DateTime
+  createdAt  DateTime         @default(now())
+
+  estate Estate @relation(fields: [estateId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// VENDOR & PORTFOLIO MANAGEMENT
+// -------------------------------------------------------------
+
+model Vendor {
+  id        String         @id @default(uuid())
+  name      String
+  email     String         @unique
+  phone     String
+  category  WorkerCategory @default(FURNITURE_CARPENTRY)
+  bio       String?
+  rating    Float          @default(5.0)
+  isPublic  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+
+  portfolios        PortfolioItem[]
+  estateLinks       EstateVendor[]
+  assignedTickets   Ticket[]        @relation("ActiveVendor")
+  contractorTickets Ticket[]        @relation("ActiveContractor")
+}
+
+model Contractor {
+  id           String   @id @default(uuid())
+  estateId     String?
+  name         String
+  email        String   @unique
+  phone        String
+  category     String   @default("FURNITURE")
+  rating       Float    @default(5.0)
+  availability Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  estate Estate? @relation(fields: [estateId], references: [id], onDelete: Cascade)
+}
+
+model EstateVendor {
+  id        String   @id @default(uuid())
+  estateId  String
+  vendorId  String
+  isVetted  Boolean  @default(true)
+  invitedAt DateTime @default(now())
+
+  estate Estate @relation(fields: [estateId], references: [id], onDelete: Cascade)
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([estateId, vendorId])
+}
+
+model PortfolioItem {
+  id            String                       @id @default(uuid())
+  userId        String?
+  vendorId      String?
+  title         String
+  description   String
+  imageUrl      String
+  estimatedCost Float?
+  spaceType     SpaceType
+  category      WorkerCategory
+  embedding     Unsupported("vector(1408)")?
+  createdAt     DateTime                     @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendor Vendor? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+}
+
+// -------------------------------------------------------------
+// SPATIAL SOURCING & TICKETING / GATE SECURITY
+// -------------------------------------------------------------
+
+model SpatialDesign {
+  id             String         @id @default(uuid())
+  userId         String
+  spaceType      SpaceType
+  sourceUrl      String?
+  extractedSpecs Json?
+  mockupImageUrl String?
+  branch         WorkflowBranch
+  shoppingList   Json?
+  createdAt      DateTime       @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tickets Ticket[]
+}
+
+model ConciergeMessage {
+  id        String   @id @default(uuid())
+  userId    String?
+  ticketId  String?
+  role      String // "user" or "ai"
+  content   String
+  image     String? // optional base64 image or url
+  metadata  String? // serialized JSON for tool calls, state, matchedArtisan, etc.
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Ticket {
+  id                    String          @id @default(uuid())
+  estateId              String?
+  userId                String?
+  tenantPhone           String?
+  houseIdentifier       String?
+  reportedIssueRaw      String?
+  designId              String?
+  category              WorkerCategory?
+  resolvedCategory      String?
+  userConfirmedCategory Boolean         @default(false)
+  branch                WorkflowBranch  @default(PHYSICAL_LABOR)
+
+  contractorRosterQueue  String[] @default([])
+  currentContractorIndex Int      @default(0)
+  activeVendorId         String?
+  activeContractorId     String?
+  emailMessageId         String?
+  estimatedLaborCost     Float?
+  estimatedCostNaira     Float?
+  negotiationStatus      String   @default("PENDING")
+  isCompleted            Boolean  @default(false)
+
+  gateAccessPin          String?
+  gateAccessPinExpiresAt DateTime?
+  gateAccessPinExpiredAt DateTime?
+  gateAccessPinUsed      Boolean   @default(false)
+
+  status               String @default("INTAKE")
+  graphExecutionStatus String @default("INTAKE")
+  timeoutCounter       Int    @default(0)
+
+  ratingScore  Int?
+  ratingReview String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  estate           Estate?        @relation(fields: [estateId], references: [id], onDelete: Cascade)
+  user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  design           SpatialDesign? @relation(fields: [designId], references: [id], onDelete: SetNull)
+  activeVendor     Vendor?        @relation("ActiveVendor", fields: [activeVendorId], references: [id], onDelete: SetNull)
+  activeContractor Vendor?        @relation("ActiveContractor", fields: [activeContractorId], references: [id], onDelete: SetNull)
+  messages         Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  ticketId  String
+  sender    String
+  content   String
+  mediaUrl  String?
+  createdAt DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
