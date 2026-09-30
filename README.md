@@ -4,34 +4,51 @@ Decox is a mobile-first spatial redesign and sourcing platform that transforms p
 
 ---
 
-## 📁 Clean Repository Structure
+## 📱 Download Android APK
+Get the live Android build directly to test on your phone:
+- **Download Link (Google Drive):** [Download Decox APK](https://drive.google.com/file/d/1e_L5kmCQyT-x4JuPVoY3y9Akb0zuP2mB/view?usp=sharing)
+- **File Name:** `decox.apk` (177 MB)
+- **Target OS:** Android 10+ (Built with Expo & React Native)
+
+---
+
+## 🌟 Key Features
+- **Grounding in Real Commerce:** Ends hallucinated "AI slop" by searching live e-commerce stores (Jumia, Amazon, Jiji) for real, buyable items with verified pricing and direct checkout URLs.
+- **Multimodal Spatial Staging (Gemini 3.8 Flash):** Seamlessly composites sourced retail items into the user's room while preserving original walls, windows, structural geometry, and ambient lighting.
+- **Vetted Artisan Sourcing:** Matches custom architectural surface work (POP ceilings, fluted wood paneling, screeding, tiling, compound pavers) directly to verified local master artisans via PostgreSQL `pgvector` semantic search.
+- **In-App Messaging & Portfolio Publishing:** Direct chat between homeowners and craftspeople, plus a community artisan feed with 1-tap portfolio submissions.
+
+---
+
+## 📁 Repository Structure
 
 ```
-CaterX/
-├── ionic/                   # Clean Mobile App (Ionic / Capacitor / Next.js)
-│   ├── capacitor.config.ts  # Native iOS & Android build config (appId: ng.decox.app)
+Decox/
+├── mobile/                  # React Native & Expo Mobile Client
+│   ├── app.json             # Expo project configuration
+│   ├── App.tsx              # Application root with Theme & Auth providers
 │   ├── src/
-│   │   ├── app/             # Mobile-first routes: /app (Studio), /app/designs, /app/feed, /app/settings
-│   │   ├── components/      # AiConcierge, PaywallModal, AddPortfolioModal, ProfileDropdown
-│   │   ├── lib/
-│   │   │   ├── camera.ts    # Native camera/gallery capture hook (@capacitor/camera)
-│   │   │   └── revenuecat.ts# In-app purchases & Pro subscriptions (@revenuecat/purchases-capacitor)
-│   │   └── prisma/          # Database schema (User, PortfolioItem, SpatialDesign)
+│   │   ├── components/      # MasonryGrid, AddPortfolioModal, PaywallModal, BottomNav
+│   │   ├── navigation/      # Auth & Main Tab navigators
+│   │   ├── screens/         # HomeFeed, CreateUpload, Processing, ResultScreen, Chat
+│   │   ├── services/        # apiClient, authService, revenueCatService
+│   │   └── config/          # firebaseConfig
 │   └── package.json
 │
-├── python/                  # Dedicated Python LangGraph & LangChain Microservice
+├── python/                  # LangGraph & Multimodal AI Backend
 │   ├── app/
-│   │   ├── main.py          # FastAPI application exposing /health & /api/concierge
+│   │   ├── main.py          # FastAPI application & REST endpoints
 │   │   ├── graph.py         # Compiled LangGraph StateGraph
-│   │   ├── state.py         # RoomDesignState TypedDict
-│   │   ├── nodes.py         # Classification, store sourcing, artisan pin matching, action cards
-│   │   └── services/        # Gemini 3.8 Flash client & Nigerian artisan catalog
+│   │   ├── state.py         # RoomDesignState schema
+│   │   ├── nodes.py         # Classification, store sourcing, artisan matching, staging
+│   │   └── services/        # Gemini 3.8 Flash, Parallel.ai, pgvector search, GCS
 │   ├── Dockerfile           # Production container for Cloud Run deployment
-│   ├── requirements.txt     # fastapi, uvicorn, langgraph, langchain, google-genai
-│   └── README.md
+│   ├── cloudrun.env.yaml    # Cloud Run deployment configuration
+│   └── requirements.txt     # fastapi, uvicorn, langgraph, google-genai, psycopg2
 │
-├── package.json             # Root unified workspace runner
-└── pnpm-workspace.yaml      # Monorepo configuration
+├── decox_assets/            # App icons, high-res presentation assets & sample designs
+├── .gitignore               # Strict exclusion of secrets, keys, and build binaries
+└── README.md
 ```
 
 ---
@@ -41,7 +58,7 @@ CaterX/
 ### 1. Launch Python LangGraph Microservice
 ```bash
 cd python
-# Setup virtual environment with uv (or standard venv)
+# Setup virtual environment
 uv venv .venv
 .venv\Scripts\activate   # On Windows (or source .venv/bin/activate on Mac/Linux)
 uv pip install -r requirements.txt
@@ -49,20 +66,23 @@ uv pip install -r requirements.txt
 # Start FastAPI server on port 8000
 python -m uvicorn app.main:app --port 8000 --reload
 ```
-Test health: `curl http://127.0.0.1:8000/health`
+Check health: `curl http://127.0.0.1:8000/health`
 
-### 2. Launch Ionic Mobile Frontend
+### 2. Launch Mobile App (Expo)
 ```bash
-cd ionic
-pnpm install
-pnpm dev
+cd mobile
+npm install
+npx expo start
 ```
-Open `http://localhost:3000` to preview in mobile simulation mode.
+Scan the QR code with Expo Go on Android/iOS, or press `a` to run on an attached Android device / emulator.
 
 ---
 
-## 💳 Native Mobile Capabilities (10-Day Launch Ready)
-
-- **RevenueCat In-App Purchases:** Integrated in `@/lib/revenuecat` using `@revenuecat/purchases-capacitor` v13.6 with full support for Apple App Store and Google Play subscriptions (`PaywallModal.tsx`).
-- **Native Camera & Gallery:** Integrated in `@/lib/camera` using `@capacitor/camera` v8.2 for instant spatial photo snapping.
-- **Unified Role Space:** Normal users can freely design spaces, browse the Pinterest-style Craft Feed at `/app/feed`, or publish their own artisan craft pins with 1 tap.
+## 🛠️ Tech Stack
+- **AI & Perception:** Google Gemini 3.8 Flash (`google-genai` SDK)
+- **Agent Orchestration:** Python LangGraph & LangChain (`RoomDesignState`)
+- **Live Commerce Extraction:** Parallel.ai real-time web retrieval
+- **Vector Database:** Google Cloud SQL PostgreSQL with `pgvector`
+- **Backend Infrastructure:** Google Cloud Run (Serverless Docker) & Google Cloud Storage (GCS)
+- **Mobile Frontend:** React Native, Expo, TypeScript
+- **Monetization:** RevenueCat In-App Purchases SDK
